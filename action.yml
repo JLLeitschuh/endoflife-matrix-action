@@ -1,11 +1,31 @@
-name: 'Your name here'
-description: 'Provide a description here'
-author: 'Your name or organization here'
+name: 'End of Life Matrix Action'
+description: >-
+  Outputs an array of the versions of a product that are still supported.
+  This uses the `https://endoflife.date/api/` API to determine which versions are still supported.
+author: 'Jonathan Leitschuh'
+branding:
+  icon: 'list'
+  color: 'blue'
+
 inputs:
-  milliseconds: # change this
+  product:
     required: true
-    description: 'input description here'
-    default: 'default value if applicable'
+    description: >-
+      The product to check for end of life. Must be a value listed within `https://endoflife.date/api/all.json`.
+  additional-versions:
+    required: false
+    description: 'Additional versions to include in the matrix'
+    default: '[]'
+  exclude-versions:
+    required: false
+    description: 'Versions to exclude from the matrix'
+    default: '[]'
+  max-versions:
+    required: false
+    description: 'The maximum version number to include in the matrix'
+outputs:
+  version-matrix:
+      description: 'The version matrix'
 runs:
   using: 'node16'
   main: 'dist/index.js'
