@@ -33,7 +33,6 @@ jobs:
 
       - name: Rebuild the dist/ directory
         run: |
-          echo "::add-mask::VeryComplexSecretThat%0AThatIsMultiline%0D%0AOfBothTypes"
           npm run build
           npm run package
 
