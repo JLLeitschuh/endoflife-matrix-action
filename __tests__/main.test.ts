@@ -13,14 +13,12 @@ test('test runs_args', async () => {
 
 // shows how the runner will run a javascript action with env / stdout protocol
 test('test runs', () => {
-  process.env['INPUT_PRODUCT'] = 'java'
-  process.env['RUNNER_DEBUG'] = '1'
-  const np = process.execPath
+  const nodePath = process.execPath
   const ip = path.join(__dirname, '..', 'lib', 'main.js')
   const options: cp.ExecFileSyncOptions = {
-    env: process.env
+    env: {...process.env, INPUT_PRODUCT: 'java', RUNNER_DEBUG: '1'}
   }
-  const output = cp.execFileSync(np, [ip], options).toString()
+  const output = cp.execFileSync(nodePath, [ip], options).toString()
   // eslint-disable-next-line no-console
   console.log(output)
   expect(output).toContain('::set-output name=versions::[')
