@@ -5,9 +5,15 @@ import {beforeEach, afterAll, describe, expect, test} from '@jest/globals'
 import {run_args} from '../src/main'
 
 describe('integration testing', () => {
+  // eslint-disable-next-line no-undef
+  let processEnv: NodeJS.ProcessEnv
   beforeEach(() => {
     // eslint-disable-next-line no-console
     console.log('::stop-commands::stoptoken')
+    processEnv = {...process.env}
+    processEnv.GITHUB_PATH = '' // Stub out ENV file functionality, so we can verify it writes to standard out
+    processEnv.GITHUB_OUTPUT = '' // Stub out ENV file functionality, so we can verify it writes to standard out
+    processEnv.RUNNER_DEBUG = '1' // Enable debug logging
   })
   afterAll(() => {
     // eslint-disable-next-line no-console
@@ -27,7 +33,7 @@ describe('integration testing', () => {
     // eslint-disable-next-line no-console
     console.log(`Environment Before Merge: ${JSON.stringify(process.env)}`)
     const options: cp.ExecFileSyncOptions = {
-      env: {...process.env, INPUT_PRODUCT: 'java', RUNNER_DEBUG: '1'}
+      env: {...processEnv, INPUT_PRODUCT: 'java'}
     }
     // eslint-disable-next-line no-console
     console.log(`Environment After Merge: ${JSON.stringify(options.env)}`)
