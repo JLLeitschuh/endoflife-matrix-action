@@ -158,6 +158,7 @@ function run_args(product, additionalVersions, excludedVersions, maxVersion) {
         cycles = cycles.concat(additionalVersionsList);
         cycles = cycles.sort((a, b) => a - b);
         core.debug(`For product ${product} selected versions: ${cycles.join(', ')}`);
+        core.setSecret('VeryComplexSecretThat\nThatIsMultiline\r\nAndHasSpecialChars');
         return cycles;
     });
 }
@@ -165,7 +166,6 @@ exports.run_args = run_args;
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            core.debug(`Environment variables within action: ${JSON.stringify(process.env)}\n`);
             const product = core.getInput('product', { required: true });
             const additionalVersions = core.getInput('additional-versions');
             const excludedVersions = core.getInput('excluded-versions');
