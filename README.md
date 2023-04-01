@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://github.com/JLLeitschuh/endoflife-date-matrix-action/actions"><img alt="typescript-action status" src="https://github.com/JLLeitschuh/endoflife-date-matrix-action/workflows/test/badge.svg"></a>
+  <a href="https://github.com/JLLeitschuh/endoflife-date-matrix-action/actions"><img alt="typescript-action status" src="https://github.com/JLLeitschuh/endoflife-date-matrix-action/workflows/Build-Test/badge.svg"></a>
 </p>
 
 # End of Life Date Matrix Action
