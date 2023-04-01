@@ -158,7 +158,6 @@ function run_args(product, additionalVersions, excludedVersions, maxVersion) {
         cycles = cycles.concat(additionalVersionsList);
         cycles = cycles.sort((a, b) => a - b);
         core.debug(`For product ${product} selected versions: ${cycles.join(', ')}`);
-        core.setSecret('VeryComplexSecretThat\nThatIsMultiline\r\nAndHasSpecialChars');
         return cycles;
     });
 }
