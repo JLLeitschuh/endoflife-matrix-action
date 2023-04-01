@@ -156,7 +156,9 @@ function run_args(product, additionalVersions, excludedVersions, maxVersion) {
             cycles = filteredCycles;
         }
         cycles = cycles.concat(additionalVersionsList);
-        return cycles.sort((a, b) => a - b);
+        cycles = cycles.sort((a, b) => a - b);
+        core.debug(`For product ${product} selected versions: ${cycles.join(', ')}`);
+        return cycles;
     });
 }
 exports.run_args = run_args;
@@ -172,7 +174,7 @@ function run() {
         }
         catch (error) {
             if (error instanceof Error)
-                core.setFailed(error.message);
+                core.setFailed(error);
         }
     });
 }

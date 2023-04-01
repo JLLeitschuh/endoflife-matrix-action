@@ -51,7 +51,9 @@ export async function run_args(
     cycles = filteredCycles
   }
   cycles = cycles.concat(additionalVersionsList)
-  return cycles.sort((a, b) => a - b)
+  cycles = cycles.sort((a, b) => a - b)
+  core.debug(`For product ${product} selected versions: ${cycles.join(', ')}`)
+  return cycles
 }
 
 async function run(): Promise<void> {
@@ -75,7 +77,7 @@ async function run(): Promise<void> {
       )
     )
   } catch (error) {
-    if (error instanceof Error) core.setFailed(error.message)
+    if (error instanceof Error) core.setFailed(error)
   }
 }
 
