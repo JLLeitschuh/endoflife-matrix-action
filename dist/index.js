@@ -118,10 +118,28 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(2186));
 const endoflife_api_1 = __nccwpck_require__(5044);
+function convertInputListToNumberList(input, fieldName) {
+    return input
+        .split(/(,| |, )/)
+        .map(v => v.trim())
+        .filter(v => v.length !== 0)
+        .map(v => {
+        const parsed = parseInt(v, 10);
+        if (isNaN(parsed))
+            throw new Error(`Invalid ${fieldName} number: ${v}`);
+        return parsed;
+    });
+}
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const product = core.getInput('product', { required: true });
+            const additionalVersions = core.getInput('additional-versions');
+            const additionalVersionsList = convertInputListToNumberList(additionalVersions, 'additional-versions');
+            const excludedVersions = core.getInput('excluded-versions');
+            const excludedVersionsList = convertInputListToNumberList(excludedVersions, 'excluded-versions');
+            const maxVersion = core.getInput('max-versions');
+            const maxVersionNumber = maxVersion.length !== 0 ? parseInt(maxVersion, 10) : null;
             core.debug(`Retrieving end of life datat for ${product}`);
             const client = new endoflife_api_1.EndOfLifeClient();
             const eolData = yield client.fetchEOLData(product);
@@ -129,10 +147,21 @@ function run() {
             if (core.isDebug()) {
                 core.debug(JSON.stringify(eolData, null, 2));
             }
-            const cycles = eolData
+            const filteredCycles = eolData
                 .filter(version => version.eol > new Date())
-                .map(version => version.cycle);
-            core.setOutput('version-matrix', JSON.stringify(cycles));
+                .map(version => version.cycle)
+                .map(cycle => parseInt(cycle, 10))
+                .filter(cycle => !excludedVersionsList.includes(cycle));
+            let cycles;
+            if (maxVersionNumber !== null) {
+                cycles = filteredCycles.filter(cycle => cycle <= maxVersionNumber);
+            }
+            else {
+                cycles = filteredCycles;
+            }
+            cycles = cycles.concat(additionalVersionsList);
+            cycles = cycles.sort((a, b) => a - b);
+            core.setOutput('versions', JSON.stringify(cycles));
         }
         catch (error) {
             if (error instanceof Error)

@@ -16,15 +16,15 @@ inputs:
     required: false
     description: 'Additional versions to include in the matrix'
     default: ''
-  exclude-versions:
+  excluded-versions:
     required: false
     description: 'Versions to exclude from the matrix'
     default: ''
-  max-versions:
+  max-version:
     required: false
     description: 'The maximum version number to include in the matrix'
 outputs:
-  version-matrix:
+  versions:
       description: 'The version matrix'
 runs:
   using: 'node16'
