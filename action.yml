@@ -15,11 +15,11 @@ inputs:
   additional-versions:
     required: false
     description: 'Additional versions to include in the matrix'
-    default: '[]'
+    default: ''
   exclude-versions:
     required: false
     description: 'Versions to exclude from the matrix'
-    default: '[]'
+    default: ''
   max-versions:
     required: false
     description: 'The maximum version number to include in the matrix'
