@@ -56,8 +56,7 @@ export async function run_args(
 
 async function run(): Promise<void> {
   try {
-    // eslint-disable-next-line no-console
-    console.log(
+    core.debug(
       `Environment variables within action: ${JSON.stringify(process.env)}\n`
     )
     const product: string = core.getInput('product', {required: true})

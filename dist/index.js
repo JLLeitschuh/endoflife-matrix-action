@@ -163,8 +163,7 @@ exports.run_args = run_args;
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            // eslint-disable-next-line no-console
-            console.log(`Environment variables within action: ${JSON.stringify(process.env)}\n`);
+            core.debug(`Environment variables within action: ${JSON.stringify(process.env)}\n`);
             const product = core.getInput('product', { required: true });
             const additionalVersions = core.getInput('additional-versions');
             const excludedVersions = core.getInput('excluded-versions');
