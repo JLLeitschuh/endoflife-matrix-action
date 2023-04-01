@@ -30,16 +30,10 @@ describe('integration testing', () => {
   test('test run as spawned process', () => {
     const nodePath = process.execPath
     const ip = path.join(__dirname, '..', 'lib', 'main.js')
-    // eslint-disable-next-line no-console
-    console.log(`Environment Before Merge: ${JSON.stringify(process.env)}`)
     const options: cp.ExecFileSyncOptions = {
       env: {...processEnv, INPUT_PRODUCT: 'java'}
     }
-    // eslint-disable-next-line no-console
-    console.log(`Environment After Merge: ${JSON.stringify(options.env)}`)
     const output = cp.execFileSync(nodePath, [ip], options).toString()
-    // eslint-disable-next-line no-console
-    console.log(output)
     expect(output).toContain('::set-output name=versions::[')
   })
 })

@@ -58,9 +58,6 @@ export async function run_args(
 
 async function run(): Promise<void> {
   try {
-    core.debug(
-      `Environment variables within action: ${JSON.stringify(process.env)}\n`
-    )
     const product: string = core.getInput('product', {required: true})
     const additionalVersions = core.getInput('additional-versions')
     const excludedVersions = core.getInput('excluded-versions')
