@@ -15,9 +15,13 @@ test('test runs_args', async () => {
 test('test runs', () => {
   const nodePath = process.execPath
   const ip = path.join(__dirname, '..', 'lib', 'main.js')
+  // eslint-disable-next-line no-console
+  console.log(`Environment Before Merge: ${JSON.stringify(process.env)}`)
   const options: cp.ExecFileSyncOptions = {
     env: {...process.env, INPUT_PRODUCT: 'java', RUNNER_DEBUG: '1'}
   }
+  // eslint-disable-next-line no-console
+  console.log(`Environment After Merge: ${JSON.stringify(options.env)}`)
   const output = cp.execFileSync(nodePath, [ip], options).toString()
   // eslint-disable-next-line no-console
   console.log(output)
