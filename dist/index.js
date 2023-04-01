@@ -176,7 +176,10 @@ function run() {
         }
     });
 }
-run();
+if (require.main === require.cache[eval('__filename')]) {
+    // Only run if this file is being executed directly
+    run();
+}
 
 
 /***/ }),

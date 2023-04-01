@@ -79,4 +79,7 @@ async function run(): Promise<void> {
   }
 }
 
-run()
+if (require.main === module) {
+  // Only run if this file is being executed directly
+  run()
+}
