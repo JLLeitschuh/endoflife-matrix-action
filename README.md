@@ -21,7 +21,7 @@ jobs:
     steps:
       - name: Get supported versions of Java
         id: create-matrix
-        uses: JLLeitschuh/endoflife-date-matrix-action@v1
+        uses: JLLeitschuh/endoflife-matrix-action@v1
         with:
           product: java
     outputs:
