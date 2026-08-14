@@ -8,10 +8,10 @@ import type {EndOfLifeProductVersion} from '../src/endoflife-api'
 
 jest.mock('../src/endoflife-api')
 
-const javaVersions: EndOfLifeProductVersion[] = [
+const temurinVersions: EndOfLifeProductVersion[] = [
   {
     cycle: '21',
-    eol: new Date('2029-09-30'),
+    eol: new Date('2029-12-31'),
     latest: '21.0.5',
     lts: true,
     releaseDate: new Date('2023-09-19'),
@@ -19,7 +19,7 @@ const javaVersions: EndOfLifeProductVersion[] = [
   },
   {
     cycle: '17',
-    eol: new Date('2027-09-30'),
+    eol: new Date('2027-10-31'),
     latest: '17.0.13',
     lts: true,
     releaseDate: new Date('2021-09-14'),
@@ -27,7 +27,7 @@ const javaVersions: EndOfLifeProductVersion[] = [
   },
   {
     cycle: '11',
-    eol: new Date('2026-09-30'),
+    eol: new Date('2027-10-31'),
     latest: '11.0.25',
     lts: true,
     releaseDate: new Date('2018-09-25'),
@@ -46,18 +46,45 @@ describe('integration testing', () => {
     processEnv.GITHUB_OUTPUT = '' // Stub out ENV file functionality, so we can verify it writes to standard out
     processEnv.RUNNER_DEBUG = '1' // Enable debug logging
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const mockFetchEOLData = jest.fn<any>().mockResolvedValue(javaVersions)
-    ;(EndOfLifeClient as jest.MockedClass<typeof EndOfLifeClient>)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .mockImplementation(() => ({fetchEOLData: mockFetchEOLData}) as any)
+    /* eslint-disable @typescript-eslint/no-explicit-any */
+    const mockFetchEOLData = jest.fn<any>().mockResolvedValue(temurinVersions)
+    const mockFetchEOLDataByTag = jest
+      .fn<any>()
+      .mockResolvedValue(temurinVersions)
+    const clientMock = {
+      fetchEOLData: mockFetchEOLData,
+      fetchEOLDataByTag: mockFetchEOLDataByTag
+    } as any
+    /* eslint-enable @typescript-eslint/no-explicit-any */
+    ;(
+      EndOfLifeClient as jest.MockedClass<typeof EndOfLifeClient>
+    ).mockImplementation(() => clientMock)
   })
   afterAll(() => {
     // eslint-disable-next-line no-console
     console.log('::stoptoken::')
   })
-  test('test runs_args', async () => {
-    const values = await run_args('java', '44321, 33221 3111', '', '')
+  test('test runs_args with product', async () => {
+    const values = await run_args(
+      'eclipse-temurin',
+      '',
+      '44321, 33221 3111',
+      '',
+      ''
+    )
+    expect(values).toContain(44321)
+    expect(values).toContain(33221)
+    expect(values).toContain(3111)
+  })
+
+  test('test runs_args with tag', async () => {
+    const values = await run_args(
+      '',
+      'java-distribution',
+      '44321, 33221 3111',
+      '',
+      ''
+    )
     expect(values).toContain(44321)
     expect(values).toContain(33221)
     expect(values).toContain(3111)
@@ -67,12 +94,10 @@ describe('integration testing', () => {
   test('test run as spawned process', () => {
     const nodePath = process.execPath
     const ip = path.join(__dirname, '..', 'lib', 'main.js')
-    const mockScript = path.join(__dirname, 'mock-http-client.js')
     const options: cp.ExecFileSyncOptions = {
       env: {
         ...processEnv,
-        INPUT_PRODUCT: 'java',
-        NODE_OPTIONS: `--require ${mockScript}`
+        INPUT_PRODUCT: 'eclipse-temurin'
       }
     }
     const output = cp.execFileSync(nodePath, [ip], options).toString()

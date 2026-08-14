@@ -21,4 +21,4 @@ jobs:
       - uses: actions/checkout@v7
       - uses: ./
         with:
-          product: java
+          tag: java-distribution

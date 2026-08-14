@@ -51,37 +51,79 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.EndOfLifeClient = void 0;
 const httpm = __importStar(__nccwpck_require__(4844));
+const API_BASE = 'https://endoflife.date/api/v1';
 class EndOfLifeClient {
     constructor() {
         this.httpClient = new httpm.HttpClient('JLLeitschuh/endoflife-date-matrix-action', [], { allowRetries: true, maxRetries: 3 });
     }
     fetchEOLData(product) {
         return __awaiter(this, void 0, void 0, function* () {
-            const url = `https://endoflife.date/api/${product}.json`;
-            return yield this.fetchEOLDataAsJSON(url);
-        });
-    }
-    fetchEOLDataAsJSON(url) {
-        return __awaiter(this, void 0, void 0, function* () {
+            const url = `${API_BASE}/products/${product}`;
             const response = yield this.httpClient.getJson(url);
             if (response.result === null) {
                 throw new Error(`No data returned from ${url}`);
             }
-            return Array.from(response.result).map(({ cycle, eol, latest, link, lts, releaseDate, support }) => {
-                return {
-                    cycle,
-                    eol: new Date(eol),
-                    latest,
-                    link,
-                    lts,
-                    releaseDate: new Date(releaseDate),
-                    support: new Date(support)
-                };
-            });
+            return mapReleases(response.result.result.releases);
+        });
+    }
+    fetchEOLDataByTag(tag) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const url = `${API_BASE}/tags/${tag}`;
+            const response = yield this.httpClient.getJson(url);
+            if (response.result === null) {
+                throw new Error(`No data returned from ${url}`);
+            }
+            const allReleases = yield Promise.all(response.result.result.map((product) => __awaiter(this, void 0, void 0, function* () { return this.fetchEOLData(product.name); })));
+            // Merge cycles across distributions: a cycle is included if any distribution
+            // still supports it, and the EOL date is the latest (most generous) across all.
+            const cycleMap = new Map();
+            for (const releases of allReleases) {
+                for (const release of releases) {
+                    const existing = cycleMap.get(release.cycle);
+                    if (!existing) {
+                        cycleMap.set(release.cycle, release);
+                    }
+                    else {
+                        cycleMap.set(release.cycle, Object.assign(Object.assign({}, existing), { eol: mergeEolDates(existing.eol, release.eol), support: mergeOptionalDates(existing.support, release.support), lts: existing.lts || release.lts }));
+                    }
+                }
+            }
+            return Array.from(cycleMap.values());
         });
     }
 }
 exports.EndOfLifeClient = EndOfLifeClient;
+function mergeEolDates(a, b) {
+    // null means the EOL date is unknown; treat conservatively as "still supported"
+    if (a === null || b === null)
+        return null;
+    return a > b ? a : b;
+}
+function mergeOptionalDates(a, b) {
+    if (a === null || b === null)
+        return null;
+    if (a === undefined && b === undefined)
+        return undefined;
+    if (a === undefined)
+        return b;
+    if (b === undefined)
+        return a;
+    return a > b ? a : b;
+}
+function mapReleases(releases) {
+    return releases.map(r => {
+        var _a, _b;
+        return ({
+            cycle: r.name,
+            eol: r.eolFrom ? new Date(r.eolFrom) : null,
+            latest: r.latest ? r.latest.name : null,
+            link: (_b = (_a = r.latest) === null || _a === void 0 ? void 0 : _a.link) !== null && _b !== void 0 ? _b : null,
+            lts: r.isLts,
+            releaseDate: new Date(r.releaseDate),
+            support: r.eoasFrom ? new Date(r.eoasFrom) : null
+        });
+    });
+}
 
 
 /***/ }),
@@ -149,20 +191,27 @@ function convertInputListToNumberList(input, fieldName) {
         return parsed;
     });
 }
-function run_args(product, additionalVersions, excludedVersions, maxVersion) {
+function run_args(product, tag, additionalVersions, excludedVersions, maxVersion) {
     return __awaiter(this, void 0, void 0, function* () {
         const additionalVersionsList = convertInputListToNumberList(additionalVersions, 'additional-versions');
         const excludedVersionsList = convertInputListToNumberList(excludedVersions, 'excluded-versions');
         const maxVersionNumber = maxVersion.length !== 0 ? parseInt(maxVersion, 10) : null;
-        core.debug(`Retrieving end of life data for ${product}`);
         const client = new endoflife_api_1.EndOfLifeClient();
-        const eolData = yield client.fetchEOLData(product);
-        core.debug(`Retrieved ${eolData.length} versions of ${product}`);
+        let eolData;
+        if (tag.length > 0) {
+            core.debug(`Retrieving end of life data for tag ${tag}`);
+            eolData = yield client.fetchEOLDataByTag(tag);
+        }
+        else {
+            core.debug(`Retrieving end of life data for ${product}`);
+            eolData = yield client.fetchEOLData(product);
+        }
+        core.debug(`Retrieved ${eolData.length} versions`);
         if (core.isDebug()) {
             core.debug(JSON.stringify(eolData, null, 2));
         }
         const filteredCycles = eolData
-            .filter(version => version.eol > new Date())
+            .filter(version => version.eol === null || version.eol > new Date())
             .map(version => version.cycle)
             .map(cycle => parseInt(cycle, 10))
             .filter(cycle => !excludedVersionsList.includes(cycle));
@@ -175,18 +224,22 @@ function run_args(product, additionalVersions, excludedVersions, maxVersion) {
         }
         cycles = cycles.concat(additionalVersionsList);
         cycles = cycles.sort((a, b) => a - b);
-        core.debug(`For product ${product} selected versions: ${cycles.join(', ')}`);
+        core.debug(`Selected versions: ${cycles.join(', ')}`);
         return cycles;
     });
 }
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const product = core.getInput('product', { required: true });
+            const product = core.getInput('product');
+            const tag = core.getInput('tag');
+            if (product.length === 0 && tag.length === 0) {
+                throw new Error("Either 'product' or 'tag' input must be provided");
+            }
             const additionalVersions = core.getInput('additional-versions');
             const excludedVersions = core.getInput('excluded-versions');
             const maxVersion = core.getInput('max-version');
-            core.setOutput('versions', JSON.stringify(yield run_args(product, additionalVersions, excludedVersions, maxVersion)));
+            core.setOutput('versions', JSON.stringify(yield run_args(product, tag, additionalVersions, excludedVersions, maxVersion)));
         }
         catch (error) {
             if (error instanceof Error)
