@@ -1,4 +1,4 @@
-import * as httpm from 'typed-rest-client/HttpClient'
+import * as httpm from '@actions/http-client'
 
 export class EndOfLifeClient {
   private httpClient: httpm.HttpClient
@@ -6,7 +6,7 @@ export class EndOfLifeClient {
   constructor() {
     this.httpClient = new httpm.HttpClient(
       'JLLeitschuh/endoflife-date-matrix-action',
-      undefined,
+      [],
       {allowRetries: true, maxRetries: 3}
     )
   }
@@ -19,26 +19,24 @@ export class EndOfLifeClient {
   private async fetchEOLDataAsJSON(
     url: string
   ): Promise<EndOfLifeProductVersion[]> {
-    return Array.from<EndOfLifeProductVersionRaw>(
-      JSON.parse(await this.httpGetText(url))
-    ).map(({cycle, eol, latest, link, lts, releaseDate, support}) => {
-      return {
-        cycle,
-        eol: new Date(eol),
-        latest,
-        link,
-        lts,
-        releaseDate: new Date(releaseDate),
-        support: new Date(support)
+    const response =
+      await this.httpClient.getJson<EndOfLifeProductVersionRaw[]>(url)
+    if (response.result === null) {
+      throw new Error(`No data returned from ${url}`)
+    }
+    return Array.from<EndOfLifeProductVersionRaw>(response.result).map(
+      ({cycle, eol, latest, link, lts, releaseDate, support}) => {
+        return {
+          cycle,
+          eol: new Date(eol),
+          latest,
+          link,
+          lts,
+          releaseDate: new Date(releaseDate),
+          support: new Date(support)
+        }
       }
-    })
-  }
-
-  private async httpGetText(url: string): Promise<string> {
-    const response = await this.httpClient.get(url, {
-      Accept: 'application/json'
-    })
-    return response.readBody()
+    )
   }
 }
 
