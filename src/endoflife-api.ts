@@ -35,7 +35,9 @@ export class EndOfLifeClient {
   }
 
   private async httpGetText(url: string): Promise<string> {
-    const response = await this.httpClient.get(url)
+    const response = await this.httpClient.get(url, {
+      Accept: 'application/json'
+    })
     return response.readBody()
   }
 }

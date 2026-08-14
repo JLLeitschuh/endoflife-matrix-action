@@ -78,7 +78,9 @@ class EndOfLifeClient {
     }
     httpGetText(url) {
         return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.httpClient.get(url);
+            const response = yield this.httpClient.get(url, {
+                Accept: 'application/json'
+            });
             return response.readBody();
         });
     }
