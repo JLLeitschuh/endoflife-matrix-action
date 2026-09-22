@@ -9,9 +9,19 @@ branding:
 
 inputs:
   product:
-    required: true
+    required: false
     description: >-
-      The product to check for end of life. Must be a value listed within `https://endoflife.date/api/all.json`.
+      The product to check for end of life. Must be a product name from
+      `https://endoflife.date/api/v1/products`. Either `product` or `tag` must be provided.
+    default: ''
+  tag:
+    required: false
+    description: >-
+      Fetch all products with this endoflife.date tag and use the union of their
+      supported release cycles. Useful for products split into multiple distributions,
+      e.g. `java-distribution`. Must be a tag name from `https://endoflife.date/api/v1/tags`.
+      Either `product` or `tag` must be provided.
+    default: ''
   additional-versions:
     required: false
     description: 'Additional versions to include in the matrix'
@@ -27,5 +37,5 @@ outputs:
   versions:
       description: 'The version matrix'
 runs:
-  using: 'node16'
+  using: 'node20'
   main: 'dist/index.js'

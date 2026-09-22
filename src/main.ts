@@ -18,6 +18,7 @@ function convertInputListToNumberList(
 
 export async function run_args(
   product: string,
+  tag: string,
   additionalVersions: string,
   excludedVersions: string,
   maxVersion: string
@@ -32,15 +33,21 @@ export async function run_args(
   )
   const maxVersionNumber =
     maxVersion.length !== 0 ? parseInt(maxVersion, 10) : null
-  core.debug(`Retrieving end of life data for ${product}`)
   const client = new EndOfLifeClient()
-  const eolData = await client.fetchEOLData(product)
-  core.debug(`Retrieved ${eolData.length} versions of ${product}`)
+  let eolData
+  if (tag.length > 0) {
+    core.debug(`Retrieving end of life data for tag ${tag}`)
+    eolData = await client.fetchEOLDataByTag(tag)
+  } else {
+    core.debug(`Retrieving end of life data for ${product}`)
+    eolData = await client.fetchEOLData(product)
+  }
+  core.debug(`Retrieved ${eolData.length} versions`)
   if (core.isDebug()) {
     core.debug(JSON.stringify(eolData, null, 2))
   }
   const filteredCycles = eolData
-    .filter(version => version.eol > new Date())
+    .filter(version => version.eol === null || version.eol > new Date())
     .map(version => version.cycle)
     .map(cycle => parseInt(cycle, 10))
     .filter(cycle => !excludedVersionsList.includes(cycle))
@@ -52,13 +59,17 @@ export async function run_args(
   }
   cycles = cycles.concat(additionalVersionsList)
   cycles = cycles.sort((a, b) => a - b)
-  core.debug(`For product ${product} selected versions: ${cycles.join(', ')}`)
+  core.debug(`Selected versions: ${cycles.join(', ')}`)
   return cycles
 }
 
 async function run(): Promise<void> {
   try {
-    const product: string = core.getInput('product', {required: true})
+    const product: string = core.getInput('product')
+    const tag: string = core.getInput('tag')
+    if (product.length === 0 && tag.length === 0) {
+      throw new Error("Either 'product' or 'tag' input must be provided")
+    }
     const additionalVersions = core.getInput('additional-versions')
     const excludedVersions = core.getInput('excluded-versions')
     const maxVersion = core.getInput('max-version')
@@ -67,6 +78,7 @@ async function run(): Promise<void> {
       JSON.stringify(
         await run_args(
           product,
+          tag,
           additionalVersions,
           excludedVersions,
           maxVersion
